@@ -36,7 +36,7 @@ GET /api/single/integer?min=1&max=1000
 #### Example Response:
 ```json
 {
-  "random_integer": 457
+  "value": 457
 }
 ```
 
@@ -52,7 +52,7 @@ GET /api/single/float
 #### Example Response:
 ```json
 {
-  "random_float": 0.6785937
+  "value": 0.6785937
 }
 ```
 
@@ -68,7 +68,7 @@ GET /api/single/int64
 #### Example Response:
 ```json
 {
-  "random_int64": 9223372036854775807
+  "value": 9223372036854775807
 }
 ```
 
@@ -84,7 +84,7 @@ GET /api/single/uint64
 #### Example Response:
 ```json
 {
-  "random_uint64": 18446744073709551615
+  "value": 18446744073709551615
 }
 ```
 
@@ -111,7 +111,7 @@ GET /api/batch/integer?min=1&max=1000&count=5
 #### Example Response:
 ```json
 {
-  "random_integers": [457, 329, 782, 123, 951]
+  "value": [457, 329, 782, 123, 951]
 }
 ```
 
@@ -130,7 +130,7 @@ GET /api/batch/float?count=3
 #### Example Response:
 ```json
 {
-  "random_floats": [0.6785937, 0.2345682, 0.9571234]
+  "value": [0.6785937, 0.2345682, 0.9571234]
 }
 ```
 
@@ -149,7 +149,7 @@ GET /api/batch/int64?count=2
 #### Example Response:
 ```json
 {
-  "random_int64": [9223372036854775807, -7234567890123456789]
+  "value": [9223372036854775807, -7234567890123456789]
 }
 ```
 
@@ -168,7 +168,7 @@ GET /api/batch/uint64?count=4
 #### Example Response:
 ```json
 {
-  "random_uint64": [18446744073709551615, 12345678901234567890, 9876543210987654321, 5678901234567890123]
+  "value": [18446744073709551615, 12345678901234567890, 9876543210987654321, 5678901234567890123]
 }
 ```
 

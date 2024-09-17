@@ -26,7 +26,7 @@ var (
 	host           = ":8000"
 	release        = false
 	logFormat      = "2006-01-02 15:04:05"
-	reSeedInterval = 10000
+	reSeedInterval = 32000
 	bufferSize     = 1000
 	workerCount    = 10
 )
@@ -34,7 +34,7 @@ var (
 func init() {
 	flag.BoolVar(&release, "release", false, "Release mode")
 	flag.StringVar(&host, "host", ":8000", "Bind host")
-	flag.IntVar(&reSeedInterval, "reseed-interval", 10000, "ReSeed interval")
+	flag.IntVar(&reSeedInterval, "reseed-interval", 32000, "ReSeed interval")
 	flag.IntVar(&bufferSize, "buffer-size", 1000, "Buffer size")
 	flag.IntVar(&workerCount, "worker-count", 10, "Worker count")
 	flag.Parse()
