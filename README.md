@@ -1,4 +1,4 @@
-# Random Number Generation Service Documentation
+# Random Number Generation Service
 
 ## Overview
 
@@ -47,7 +47,7 @@ GET /api/random/integer?min=1&max=1000
 #### Example Response:
 ```json
 {
-  "random_integer": 457
+  "value": 457
 }
 ```
 
@@ -63,7 +63,7 @@ GET /api/random/float
 #### Example Response:
 ```json
 {
-  "random_float": 0.6785937
+  "value": 0.6785937
 }
 ```
 
@@ -79,7 +79,7 @@ GET /api/random/int64
 #### Example Response:
 ```json
 {
-  "random_int64": 9223372036854775807
+  "value": 9223372036854775807
 }
 ```
 
@@ -95,7 +95,7 @@ GET /api/random/uint64
 #### Example Response:
 ```json
 {
-  "random_uint64": 18446744073709551615
+  "value": 18446744073709551615
 }
 ```
 

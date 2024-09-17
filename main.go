@@ -3,13 +3,16 @@ package main
 import (
 	"axrand/internal"
 	"context"
+	"encoding/json"
 	"flag"
 	"github.com/go-chi/chi/v5"
 	"github.com/ironstar-io/chizerolog"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 /*
@@ -52,10 +55,10 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to create random generation service")
 	}
-
-	r.Get("/api/uint64", getHandler(internal.RequestTypeUint64, service))
-	r.Get("/api/int64", getHandler(internal.RequestTypeInt64, service))
-	r.Get("/api/float64", getHandler(internal.RequestTypeFloat64, service))
+	r.Get("/api/random/integer", getIntegerHandler(internal.RequestTypeInt, service))
+	r.Get("/api/random/uint64", getHandler(internal.RequestTypeUint64, service))
+	r.Get("/api/random/int64", getHandler(internal.RequestTypeInt64, service))
+	r.Get("/api/random/float", getHandler(internal.RequestTypeFloat64, service))
 	log.Info().Str("host", host).Msg("start random server")
 	if err := http.ListenAndServe(host, r); err != nil {
 		log.Fatal().Err(err).Msg("fail to start server")
@@ -64,11 +67,64 @@ func main() {
 
 func getHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := service.GetRandomResultJson(t)
+		req := &internal.RandomRequest{
+			RequestType: t,
+			Return:      make(chan *internal.RandomResponse, 1),
+		}
+		service.C() <- req
+		out := <-req.Return
+		if out.Err != nil {
+			http.Error(w, out.Err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res, err := json.Marshal(out)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(res)
+	}
+}
+
+func getIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		minString := r.URL.Query().Get("min")
+		maxString := r.URL.Query().Get("max")
+		if minString == "" {
+			minString = "0"
+		}
+		if maxString == "" {
+			maxString = strconv.Itoa(math.MaxInt64)
+		}
+
+		req := &internal.RandomRequest{
+			RequestType: t,
+			Return:      make(chan *internal.RandomResponse, 1),
+		}
+		var err error
+		req.Min, err = strconv.Atoi(minString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		req.Max, err = strconv.Atoi(maxString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		service.C() <- req
+		out := <-req.Return
+		if out.Err != nil {
+			http.Error(w, out.Err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res, err := json.Marshal(out)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(res)
 	}
 }

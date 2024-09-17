@@ -63,12 +63,14 @@ func (w *RandomWorker) GetRandomResult(req *RandomRequest) (*RandomResponse, err
 	}
 	w.reSeedCount--
 	switch req.RequestType {
+	case RequestTypeInt:
+		return &RandomResponse{Value: w.rng.Intn(req.Max-req.Min) + req.Min}, nil
 	case RequestTypeInt64:
-		return &RandomResponse{Out: w.rng.Int63()}, nil
+		return &RandomResponse{Value: w.rng.Int63()}, nil
 	case RequestTypeUint64:
-		return &RandomResponse{Out: w.rng.Uint64()}, nil
+		return &RandomResponse{Value: w.rng.Uint64()}, nil
 	case RequestTypeFloat64:
-		return &RandomResponse{Out: w.rng.Float64()}, nil
+		return &RandomResponse{Value: w.rng.Float64()}, nil
 	default:
 		return nil, errors.New("not implemented request type")
 	}

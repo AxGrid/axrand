@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/rs/zerolog/log"
 )
 
@@ -34,17 +33,4 @@ func NewRandomGenerationService(ctx context.Context, workerCount, bufferSize, re
 
 func (s *RandomGenerationService) C() chan *RandomRequest {
 	return s.requestChan
-}
-
-func (s *RandomGenerationService) GetRandomResultJson(t RequestTypes) ([]byte, error) {
-	req := &RandomRequest{
-		RequestType: t,
-		Return:      make(chan *RandomResponse, 1),
-	}
-	s.C() <- req
-	out := <-req.Return
-	if out.Err != nil {
-		return nil, out.Err
-	}
-	return json.Marshal(out.Out)
 }
