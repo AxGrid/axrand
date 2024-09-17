@@ -58,7 +58,7 @@ GET /api/single/float
 
 ### `GET /api/single/int64`
 
-Generates a single random signed 64-bit integer.
+Generates a single random unsigned 63-bit integer.
 
 #### Example Request:
 ```bash
@@ -136,10 +136,10 @@ GET /api/batch/float?count=3
 
 ### `GET /api/batch/int64`
 
-Generates multiple signed 64-bit integers.
+Generates multiple unsigned 63-bit integers.
 
 #### Parameters:
-- `count` (optional): The number of signed 64-bit integers to generate. Defaults to 1.
+- `count` (optional): The number of unsigned 63-bit integers to generate. Defaults to 1.
 
 #### Example Request:
 ```bash
