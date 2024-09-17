@@ -9,7 +9,6 @@ import (
 	"github.com/ironstar-io/chizerolog"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -55,17 +54,28 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("fail to create random generation service")
 	}
-	r.Get("/api/random/integer", getIntegerHandler(internal.RequestTypeInt, service))
-	r.Get("/api/random/uint64", getHandler(internal.RequestTypeUint64, service))
-	r.Get("/api/random/int64", getHandler(internal.RequestTypeInt64, service))
-	r.Get("/api/random/float", getHandler(internal.RequestTypeFloat64, service))
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/single", func(r chi.Router) {
+			r.Get("/integer", getSingleIntegerHandler(internal.RequestTypeInt, service))
+			r.Get("/uint64", getSingleHandler(internal.RequestTypeUint64, service))
+			r.Get("/int64", getSingleHandler(internal.RequestTypeInt64, service))
+			r.Get("/float", getSingleHandler(internal.RequestTypeFloat64, service))
+		})
+		r.Route("/batch", func(r chi.Router) {
+			r.Get("/integer", getBatchIntegerHandler(internal.RequestTypeInt, service))
+			r.Get("/uint64", getBatchHandler(internal.RequestTypeUint64, service))
+			r.Get("/int64", getBatchHandler(internal.RequestTypeInt64, service))
+			r.Get("/float", getBatchHandler(internal.RequestTypeFloat64, service))
+		})
+	})
+
 	log.Info().Str("host", host).Msg("start random server")
 	if err := http.ListenAndServe(host, r); err != nil {
 		log.Fatal().Err(err).Msg("fail to start server")
 	}
 }
 
-func getHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
+func getSingleHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &internal.RandomRequest{
 			RequestType: t,
@@ -87,7 +97,7 @@ func getHandler(t internal.RequestTypes, service *internal.RandomGenerationServi
 	}
 }
 
-func getIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
+func getSingleIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		minString := r.URL.Query().Get("min")
 		maxString := r.URL.Query().Get("max")
@@ -95,7 +105,7 @@ func getIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerati
 			minString = "0"
 		}
 		if maxString == "" {
-			maxString = strconv.Itoa(math.MaxInt64)
+			maxString = "100"
 		}
 
 		req := &internal.RandomRequest{
@@ -103,6 +113,92 @@ func getIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerati
 			Return:      make(chan *internal.RandomResponse, 1),
 		}
 		var err error
+		req.Min, err = strconv.Atoi(minString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		req.Max, err = strconv.Atoi(maxString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		service.C() <- req
+		out := <-req.Return
+		if out.Err != nil {
+			http.Error(w, out.Err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res, err := json.Marshal(out)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(res)
+	}
+}
+
+func getBatchHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		countString := r.URL.Query().Get("count")
+		if countString == "" {
+			countString = "1"
+		}
+		count, err := strconv.Atoi(countString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		req := &internal.RandomRequest{
+			RequestType: t,
+			Count:       count,
+			Batch:       true,
+			Return:      make(chan *internal.RandomResponse, 1),
+		}
+		service.C() <- req
+		out := <-req.Return
+		if out.Err != nil {
+			http.Error(w, out.Err.Error(), http.StatusInternalServerError)
+			return
+		}
+		res, err := json.Marshal(out)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(res)
+	}
+}
+
+func getBatchIntegerHandler(t internal.RequestTypes, service *internal.RandomGenerationService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		minString := r.URL.Query().Get("min")
+		maxString := r.URL.Query().Get("max")
+		countString := r.URL.Query().Get("count")
+		if countString == "" {
+			countString = "1"
+		}
+		if minString == "" {
+			minString = "0"
+		}
+		if maxString == "" {
+			maxString = "100"
+		}
+		count, err := strconv.Atoi(countString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		req := &internal.RandomRequest{
+			RequestType: t,
+			Count:       count,
+			Batch:       true,
+			Return:      make(chan *internal.RandomResponse, 1),
+		}
+
 		req.Min, err = strconv.Atoi(minString)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

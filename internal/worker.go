@@ -55,7 +55,7 @@ func (w *RandomWorker) ReSeed() error {
 	return nil
 }
 
-func (w *RandomWorker) GetRandomResult(req *RandomRequest) (*RandomResponse, error) {
+func (w *RandomWorker) GetSingleRandomResult(req *RandomRequest) (*RandomResponse, error) {
 	if w.reSeedCount <= 0 {
 		if err := w.ReSeed(); err != nil {
 			return nil, err
@@ -76,12 +76,43 @@ func (w *RandomWorker) GetRandomResult(req *RandomRequest) (*RandomResponse, err
 	}
 }
 
+func (w *RandomWorker) GetBatchRandomResult(req *RandomRequest) (*RandomResponse, error) {
+	var res []any = make([]any, req.Count)
+	for i := 0; i < req.Count; i++ {
+		if w.reSeedCount <= 0 {
+			if err := w.ReSeed(); err != nil {
+				return nil, err
+			}
+		}
+		w.reSeedCount--
+		switch req.RequestType {
+		case RequestTypeInt:
+			res[i] = w.rng.Intn(req.Max-req.Min) + req.Min
+		case RequestTypeInt64:
+			res[i] = w.rng.Int63()
+		case RequestTypeUint64:
+			res[i] = w.rng.Uint64()
+		case RequestTypeFloat64:
+			res[i] = w.rng.Float64()
+		default:
+			return nil, errors.New("not implemented request type")
+		}
+	}
+	return &RandomResponse{Value: res}, nil
+}
+
 func (w *RandomWorker) run() {
 
 	for {
 		select {
 		case req := <-w.requestChan:
-			resp, err := w.GetRandomResult(req)
+			var err error
+			var resp *RandomResponse
+			if req.Batch {
+				resp, err = w.GetBatchRandomResult(req)
+			} else {
+				resp, err = w.GetSingleRandomResult(req)
+			}
 			if err != nil {
 				req.Return <- &RandomResponse{Err: err}
 			} else {

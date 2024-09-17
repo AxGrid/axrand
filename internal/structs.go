@@ -20,6 +20,8 @@ var (
 type RandomRequest struct {
 	RequestType RequestTypes
 	Min, Max    int
+	Count       int
+	Batch       bool
 	Return      chan *RandomResponse
 }
 
