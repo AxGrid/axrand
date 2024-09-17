@@ -1,4 +1,4 @@
-# Random Number Generation Service Documentation
+# Random Number Generation Service
 
 ## Overview
 
@@ -149,7 +149,7 @@ GET /api/batch/int64?count=2
 #### Example Response:
 ```json
 {
-  "value": [9223372036854775807, -7234567890123456789]
+  "value": [9223372036854775807, 7234567890123456789]
 }
 ```
 
